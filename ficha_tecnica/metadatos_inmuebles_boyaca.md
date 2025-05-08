@@ -34,7 +34,8 @@ Este conjunto de datos recopila información sobre inmuebles publicados para la 
 ---
 
 ## 6. Número de registros:
-*(Completar con el número total de filas de tu DataFrame)*
+*Registros: 939*
+*columns : 22*
 
 ---
 
@@ -67,3 +68,4 @@ Este conjunto de datos recopila información sobre inmuebles publicados para la 
 
 ## 8. Formato de los datos:
 - CSV / DataFrame de pandas
+- [Dataset](../data/datos_ciudades.csv)
