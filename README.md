@@ -55,9 +55,9 @@ Este proyecto tiene como objetivo principal analizar y visualizar datos de inmue
 - Pandas, Plotly, Folium, BeautifulSoup, Dash o Streamlit (opcional)
 
 ## Enlaces Relevantes
-- [CSV con datos](./data/inmuebles_boyaca.csv)
+- [CSV con datos](./data)
 - [Ficha técnica / metadatos](./ficha_tecnica/metadatos_inmuebles_boyaca.md)
-- [Script de scraping](./scrapy/scraper.py)
+- [Script de scraping](./scrapy)
 - [Dashboard en HTML](./dashboard/dashboard_inmuebles.html)
 
 ---
