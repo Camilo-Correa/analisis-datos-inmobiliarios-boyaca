@@ -7,26 +7,31 @@ Este proyecto tiene como objetivo principal analizar y visualizar datos de inmue
 
 /
 ├── README.md
-├── data/
-│ └── inmuebles_boyaca.csv
+   ├── data/
 ├── ficha_tecnica/
-│ └── metadatos_inmuebles_boyaca.md
+   │ └── metadatos_inmuebles_boyaca.md
 ├── scrapy/
-│ ├── scraper.py
-│ ├── urls_tunja.txt
-│ ├── urls_duitama.txt
-│ ├── urls_sogamoso.txt
-│ └── urls_paipa.txt
+   │ ├── scraper.py
+   │ ├── urls_tunja.txt
+   │ ├── urls_duitama.txt
+   │ ├── urls_sogamoso.txt
+   │ └── urls_paipa.txt
 ├── dashboard/
-│ └── dashboard_inmuebles.html
-└── visualizaciones/
-└── *.png / *.html (graficos generados)
+   │ └── dashboard_inmuebles.html
+└── limpieza_data/
+   └──archivo_data_limpia.ipynb 
 
 ## Objetivos del Proyecto
 
 1. **Recolección de Datos:**
    - Realizar scraping de inmuebles en venta por ciudad.
    - Almacenar datos estructurados en CSV.
+
+1. **Limpieza de Datos:**
+   - Tydy Data - Datos - Ordenados o estructurados
+   - Handling Data - Manejo de fechas
+   - String processing - procesamiento de texto
+   - Valores desconocidos - eliminación, imputación
 
 2. **Generación de Metadatos (Ficha Técnica):**
    - Tipo de datos por columna.
@@ -59,6 +64,7 @@ Este proyecto tiene como objetivo principal analizar y visualizar datos de inmue
 - [Ficha técnica / metadatos](./ficha_tecnica/metadatos_inmuebles_boyaca.md)
 - [Script de scraping](./scrapy)
 - [Dashboard en HTML](./dashboard/dashboard_inmuebles.html)
+- [Datos_Tratados](./limpieza_data/Limpieza_Analítica_de_Datos_inmuebles.ipynb)
 
 ---
 
