@@ -14,7 +14,7 @@
 ---
 
 ## 3. Fecha de recolección:
-*(Completar con la fecha real del scraping)*
+05/05/2025
 
 ---
 
