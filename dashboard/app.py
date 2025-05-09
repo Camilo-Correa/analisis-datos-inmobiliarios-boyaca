@@ -1,66 +1,134 @@
-
 import pandas as pd
-import dash
-from dash import dcc, html
-from dash.dependencies import Input, Output
 import plotly.express as px
+import dash
+from dash import html, dcc
+from dash.dependencies import Input, Output
 
 # Cargar datos
-df = pd.read_csv("https://raw.githubusercontent.com/german-viso/datasets/main/inmuebles_bogota.csv")
+df = pd.read_csv('dashboard/datos_ciudades.csv')
 
-# Preprocesamiento
-df = df[df["precio"].notnull() & df["area"].notnull()]
-df["estrato"] = df["estrato"].fillna("Sin Dato")
-df["precio_m2"] = df["precio"] / df["area"]
+# Preprocesamiento general
+df['precio_millones'] = (df['precio'] / 1_000_000).round(2)
+df['precio_millones_str'] = df['precio_millones'].apply(lambda x: f"${x:,.1f}M")
+df['info_hover'] = (
+    "🏘️ " + df['ubicacion_asociada'].astype(str) +
+    "<br>💲 " + df['precio_millones_str'] +
+    "<br>🛏️ " + df['habitaciones'].astype(str) +
+    "<br>💧 " + df['baños'].astype(str)
+)
+df['precio_texto'] = df['precio_millones'].apply(lambda x: f"{int(x):,}".replace(",", ".") + " millones")
+df['precio_m2'] = df['precio'] / df['area m²']
+lotes_df = df[df['tipo_inmueble'].str.lower() == 'lote'].copy()
 
-# Inicializar app Dash
+# Crear app principal
 app = dash.Dash(__name__)
-app.title = "Análisis de Inmuebles en Bogotá"
+app.title = "Dashboard Inmobiliario"
 
-# Layout de la app
+# Layout principal con Tabs
 app.layout = html.Div([
-    html.H1("Análisis de Inmuebles por Estrato en Bogotá", style={"textAlign": "center"}),
-    
-    html.Label("Selecciona una ciudad:"),
-    dcc.Dropdown(
-        id="ciudad-dropdown",
-        options=[{"label": ciudad, "value": ciudad} for ciudad in df["ciudad"].unique()],
-        value="Bogotá D.C."
-    ),
-
-    dcc.Graph(id="grafico-pie"),
-    html.Div(id="descripcion", style={"marginTop": "20px"})
+    html.H1("Dashboard Inmobiliario – Boyacá", style={'textAlign': 'center'}),
+    dcc.Tabs(id='tabs', value='tab-mapa', children=[
+        dcc.Tab(label='Mapa de Precios', value='tab-mapa'),
+        dcc.Tab(label='Precio vs Área', value='tab-barra'),
+        dcc.Tab(label='Lotes por Ciudad', value='tab-lotes'),
+        dcc.Tab(label='Precio Promedio por m²', value='tab-precio-m2')
+    ]),
+    html.Div(id='contenido-tab')
 ])
 
-# Callback para actualizar gráfico y descripción
-@app.callback(
-    [Output("grafico-pie", "figure"),
-     Output("descripcion", "children")],
-    [Input("ciudad-dropdown", "value")]
-)
-def actualizar_grafico(ciudad):
-    df_filtrado = df[df["ciudad"] == ciudad]
-    agrupado = df_filtrado.groupby("estrato").agg(
-        cantidad=("estrato", "count"),
-        promedio_precio_m2=("precio_m2", "mean")
-    ).reset_index()
+# Callbacks para Tabs
+@app.callback(Output('contenido-tab', 'children'), Input('tabs', 'value'))
+def render_tab(tab):
+    if tab == 'tab-mapa':
+        return html.Div([
+            html.Label("Ciudad:"),
+            dcc.Dropdown(id='filtro-ciudad', options=[{'label': c, 'value': c} for c in sorted(df['Ciudad'].dropna().unique())], value=sorted(df['Ciudad'].dropna().unique())[0]),
+            html.Label("Tipo de Inmueble:"),
+            dcc.Dropdown(id='filtro-tipo', options=[{'label': t, 'value': t} for t in sorted(df['tipo_inmueble'].dropna().unique())], value=None, placeholder="Todos"),
+            html.Label("Estrato:"),
+            dcc.Dropdown(id='filtro-estrato', options=[{'label': str(e), 'value': e} for e in sorted(df['estrato'].dropna().unique())], value=None, placeholder="Todos"),
+            dcc.Graph(id='mapa-precios')
+        ], style={'width': '60%', 'margin': 'auto'})
 
-    agrupado["precio_m2_fmt"] = agrupado["promedio_precio_m2"].apply(lambda x: f"${x:,.0f}")
+    elif tab == 'tab-barra':
+        return html.Div([
+            html.Label("Ciudad:"),
+            dcc.Dropdown(id='ciudad-barra', options=[{'label': c, 'value': c} for c in sorted(df['Ciudad'].dropna().unique())], value=sorted(df['Ciudad'].dropna().unique())[0]),
+            html.Label("Estrato:"),
+            dcc.Dropdown(id='estrato-barra', options=[{'label': str(e), 'value': e} for e in sorted(df['estrato'].dropna().unique())], value=None, placeholder="Todos"),
+            dcc.Graph(id='grafico-precio-area')
+        ], style={'width': '60%', 'margin': 'auto'})
 
-    fig = px.pie(
-        agrupado,
-        names="estrato",
-        values="cantidad",
-        title=f"Participación de inmuebles por estrato en {ciudad}",
-        hole=0.4
+    elif tab == 'tab-lotes':
+        return html.Div([
+            html.Label("Ciudad:"),
+            dcc.Dropdown(id='ciudad-lotes', options=[{'label': c, 'value': c} for c in sorted(lotes_df['Ciudad'].dropna().unique())], value=sorted(lotes_df['Ciudad'].dropna().unique())[0]),
+            dcc.Graph(id='mapa-lotes')
+        ], style={'width': '60%', 'margin': 'auto'})
+
+    elif tab == 'tab-precio-m2':
+        return html.Div([
+            html.Label("Ciudad:"),
+            dcc.Dropdown(id='ciudad-torta', options=[{'label': c, 'value': c} for c in sorted(df['Ciudad'].dropna().unique())], value=sorted(df['Ciudad'].dropna().unique())[0]),
+            dcc.Graph(id='grafico-precio-m2')
+        ], style={'width': '60%', 'margin': 'auto'})
+
+# Callback Mapa Precios
+@app.callback(Output('mapa-precios', 'figure'),
+              Input('filtro-ciudad', 'value'),
+              Input('filtro-tipo', 'value'),
+              Input('filtro-estrato', 'value'))
+def actualizar_mapa(ciudad, tipo_inmueble, estrato):
+    df_f = df[df['Ciudad'] == ciudad]
+    if tipo_inmueble: df_f = df_f[df_f['tipo_inmueble'] == tipo_inmueble]
+    if estrato: df_f = df_f[df_f['estrato'] == estrato]
+    fig = px.scatter_mapbox(
+        df_f, lat='latitud', lon='longitud', color='precio_millones', size='precio_millones',
+        hover_name='info_hover', mapbox_style="carto-positron", zoom=12,
+        color_continuous_scale='Plasma', title="Mapa de precios"
     )
+    fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
+    return fig
 
-    descripcion = "En esta gráfica se puede observar la distribución de inmuebles por estrato y el precio promedio por m² para cada uno:\n\n"
-    descripcion += "\n".join([f"- Estrato {row['estrato']}: {row['precio_m2_fmt']} por m² ({row['cantidad']} inmuebles)"
-                              for _, row in agrupado.iterrows()])
+# Callback Gráfico Barra Precio vs Área
+@app.callback(Output('grafico-precio-area', 'figure'),
+              Input('ciudad-barra', 'value'),
+              Input('estrato-barra', 'value'))
+def actualizar_barra(ciudad, estrato):
+    df_f = df[df['Ciudad'] == ciudad]
+    if estrato: df_f = df_f[df_f['estrato'] == estrato]
+    df_f = df_f.sort_values(by='precio', ascending=False).head(30)
+    fig = px.bar(df_f, x='area m²', y='precio_millones', color='estado_inmueble',
+                 hover_name='ubicacion_asociada', labels={'area m²': 'Área (m²)', 'precio_millones': 'Precio (Millones COP)'},
+                 title="Precio vs Área en m²")
+    fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
+    return fig
 
-    return fig, descripcion
+# Callback Mapa Lotes
+@app.callback(Output('mapa-lotes', 'figure'),
+              Input('ciudad-lotes', 'value'))
+def actualizar_lotes(ciudad):
+    df_f = lotes_df[lotes_df['Ciudad'] == ciudad]
+    fig = px.scatter_mapbox(
+        df_f, lat='latitud', lon='longitud', size='precio_millones', color='precio_millones',
+        hover_name='ubicacion_asociada',
+        mapbox_style="carto-positron", zoom=12,
+        color_continuous_scale='Viridis',
+        title=f"Lotes en {ciudad}"
+    )
+    fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
+    return fig
 
-# Ejecutar la app
-if __name__ == "__main__":
-    app.run_server(debug=True)
+# Callback Gráfico Precio Promedio por m2
+@app.callback(Output('grafico-precio-m2', 'figure'),
+              Input('ciudad-torta', 'value'))
+def actualizar_precio_m2(ciudad):
+    df_f = df[df['Ciudad'] == ciudad]
+    df_mean = df_f.groupby('estrato')['precio_m2'].mean().reset_index()
+    fig = px.pie(df_mean, names='estrato', values='precio_m2', title=f"Precio promedio por m² en {ciudad}")
+    fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
+    return fig
+
+# Ejecutar
+if __name__ == '__main__':
+    app.run(debug=True)
