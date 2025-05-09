@@ -4,6 +4,8 @@ import dash
 import os
 from dash import html, dcc
 from dash.dependencies import Input, Output
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Cargar datos
 df = pd.read_csv('dashboard/datos_ciudades.csv')
@@ -26,13 +28,15 @@ app = dash.Dash(__name__)
 app.title = "Dashboard Inmobiliario"
 
 # Layout principal con Tabs
-app.layout = html.Div([
+app.layout = html.Div([ 
     html.H1("Dashboard Inmobiliario – Boyacá", style={'textAlign': 'center'}),
-    dcc.Tabs(id='tabs', value='tab-mapa', children=[
+    dcc.Tabs(id='tabs', value='tab-mapa', children=[ 
         dcc.Tab(label='Mapa de Precios', value='tab-mapa'),
         dcc.Tab(label='Precio vs Área', value='tab-barra'),
         dcc.Tab(label='Lotes por Ciudad', value='tab-lotes'),
-        dcc.Tab(label='Precio Promedio por m²', value='tab-precio-m2')
+        dcc.Tab(label='Precio Promedio por m²', value='tab-precio-m2'),
+        dcc.Tab(label='Precio Promedio por Tipo de Inmueble', value='tab-precio-tipo'),
+        dcc.Tab(label='Inmuebles por Ciudad', value='tab-ciudad')
     ]),
     html.Div(id='contenido-tab')
 ])
@@ -41,7 +45,7 @@ app.layout = html.Div([
 @app.callback(Output('contenido-tab', 'children'), Input('tabs', 'value'))
 def render_tab(tab):
     if tab == 'tab-mapa':
-        return html.Div([
+        return html.Div([ 
             html.Label("Ciudad:"),
             dcc.Dropdown(id='filtro-ciudad', options=[{'label': c, 'value': c} for c in sorted(df['Ciudad'].dropna().unique())], value=sorted(df['Ciudad'].dropna().unique())[0]),
             html.Label("Tipo de Inmueble:"),
@@ -52,7 +56,7 @@ def render_tab(tab):
         ], style={'width': '60%', 'margin': 'auto'})
 
     elif tab == 'tab-barra':
-        return html.Div([
+        return html.Div([ 
             html.Label("Ciudad:"),
             dcc.Dropdown(id='ciudad-barra', options=[{'label': c, 'value': c} for c in sorted(df['Ciudad'].dropna().unique())], value=sorted(df['Ciudad'].dropna().unique())[0]),
             html.Label("Estrato:"),
@@ -61,17 +65,27 @@ def render_tab(tab):
         ], style={'width': '60%', 'margin': 'auto'})
 
     elif tab == 'tab-lotes':
-        return html.Div([
+        return html.Div([ 
             html.Label("Ciudad:"),
             dcc.Dropdown(id='ciudad-lotes', options=[{'label': c, 'value': c} for c in sorted(lotes_df['Ciudad'].dropna().unique())], value=sorted(lotes_df['Ciudad'].dropna().unique())[0]),
             dcc.Graph(id='mapa-lotes')
         ], style={'width': '60%', 'margin': 'auto'})
 
     elif tab == 'tab-precio-m2':
-        return html.Div([
+        return html.Div([ 
             html.Label("Ciudad:"),
             dcc.Dropdown(id='ciudad-torta', options=[{'label': c, 'value': c} for c in sorted(df['Ciudad'].dropna().unique())], value=sorted(df['Ciudad'].dropna().unique())[0]),
             dcc.Graph(id='grafico-precio-m2')
+        ], style={'width': '60%', 'margin': 'auto'})
+
+    elif tab == 'tab-precio-tipo':
+        return html.Div([ 
+            dcc.Graph(id='grafico-precio-tipo')
+        ], style={'width': '60%', 'margin': 'auto'})
+
+    elif tab == 'tab-ciudad':
+        return html.Div([ 
+            dcc.Graph(id='grafico-inmuebles-ciudad')
         ], style={'width': '60%', 'margin': 'auto'})
 
 # Callback Mapa Precios
@@ -85,7 +99,7 @@ def actualizar_mapa(ciudad, tipo_inmueble, estrato):
     if estrato: df_f = df_f[df_f['estrato'] == estrato]
     fig = px.scatter_mapbox(
         df_f, lat='latitud', lon='longitud', color='precio_millones', size='precio_millones',
-        hover_name='info_hover', mapbox_style="carto-positron", zoom=12,
+        hover_name='info_hover', mapbox_style="open-street-map", zoom=12,
         color_continuous_scale='Plasma', title="Mapa de precios"
     )
     fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
@@ -113,20 +127,38 @@ def actualizar_lotes(ciudad):
     fig = px.scatter_mapbox(
         df_f, lat='latitud', lon='longitud', size='precio_millones', color='precio_millones',
         hover_name='ubicacion_asociada',
-        mapbox_style="carto-positron", zoom=12,
+        mapbox_style="open-street-map", zoom=12,
         color_continuous_scale='Viridis',
         title=f"Lotes en {ciudad}"
     )
     fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
     return fig
 
-# Callback Gráfico Precio Promedio por m2
+# Callback Gráfico Precio Promedio por m²
 @app.callback(Output('grafico-precio-m2', 'figure'),
               Input('ciudad-torta', 'value'))
 def actualizar_precio_m2(ciudad):
     df_f = df[df['Ciudad'] == ciudad]
     df_mean = df_f.groupby('estrato')['precio_m2'].mean().reset_index()
     fig = px.pie(df_mean, names='estrato', values='precio_m2', title=f"Precio promedio por m² en {ciudad}")
+    fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
+    return fig
+
+# Callback Precio Promedio por Tipo de Inmueble
+@app.callback(Output('grafico-precio-tipo', 'figure'),
+              Input('ciudad-torta', 'value'))
+def actualizar_precio_tipo(ciudad):
+    avg_price_by_type = df.groupby('tipo_inmueble')['precio_millones'].mean().reset_index()
+    fig = px.bar(avg_price_by_type, x='tipo_inmueble', y='precio_millones', title="Precio Promedio por Tipo de Inmueble")
+    fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
+    return fig
+
+# Callback Inmuebles por Ciudad
+@app.callback(Output('grafico-inmuebles-ciudad', 'figure'),
+              Input('ciudad-torta', 'value'))
+def actualizar_inmuebles_ciudad(ciudad):
+    df_f = df[df['Ciudad'] == ciudad]
+    fig = px.bar(df_f['Ciudad'].value_counts().reset_index(), x='index', y='Ciudad', title="Cantidad de Inmuebles por Ciudad")
     fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
     return fig
 
