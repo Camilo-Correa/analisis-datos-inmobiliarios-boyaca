@@ -1,7 +1,7 @@
 # Proyecto: Análisis de Datos Inmobiliarios en Boyacá
 
 ## Descripción General
-Este proyecto tiene como objetivo principal analizar y visualizar datos de inmuebles extraídos por web scraping desde el portal Finca Raíz, centrado en las cuatro ciudades más importantes del departamento de Boyacá: Tunja, Duitama, Sogamoso y Paipa. Se busca generar un storytelling basado en los datos, que permita identificar oportunidades de compra, tendencias del mercado y patrones de valorización.
+Este proyecto tiene como objetivo principal analizar y visualizar datos de inmuebles extraídos por web scraping desde el portal [Finca Raíz] https://www.fincaraiz.com.co/venta/duitama/boyaca), centrado en las cuatro ciudades más importantes del departamento de Boyacá: Tunja, Duitama, Sogamoso y Paipa. Se busca generar un storytelling basado en los datos, que permita identificar oportunidades de compra, tendencias del mercado y patrones de valorización.
 
 ## Objetivos del Proyecto
 
