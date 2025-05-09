@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output
 import plotly.express as px
 
 # Cargar datos
-df = pd.read_csv("https://raw.githubusercontent.com/german-viso/datasets/main/inmuebles_bogota.csv")
+df = pd.read_csv("dashboard/datos_ciudades.csv")
 
 # Preprocesamiento
 df = df[df["precio"].notnull() & df["area"].notnull()]
