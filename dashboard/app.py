@@ -79,15 +79,17 @@ def render_tab(tab):
         ], style={'width': '60%', 'margin': 'auto'})
 
     elif tab == 'tab-precio-tipo':
-        return html.Div([ 
-            dcc.Graph(id='grafico-precio-tipo')
+        return html.Div([
+            html.Label("Ciudad:"),
+            dcc.Dropdown(
+            id='ciudad-precio-tipo',
+            options=[{'label': c, 'value': c} for c in sorted(df['Ciudad'].dropna().unique())], value=sorted(df['Ciudad'].dropna().unique())[0]), dcc.Graph(id='grafico-precio-tipo')
         ], style={'width': '60%', 'margin': 'auto'})
 
     elif tab == 'tab-ciudad':
-        return html.Div([ 
+        return html.Div([
             dcc.Graph(id='grafico-inmuebles-ciudad')
-        ], style={'width': '60%', 'margin': 'auto'})
-
+        ], style={'width': '80%', 'margin': 'auto'})
 # Callback Mapa Precios
 @app.callback(Output('mapa-precios', 'figure'),
               Input('filtro-ciudad', 'value'),
