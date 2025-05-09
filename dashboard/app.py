@@ -1,11 +1,16 @@
 import pandas as pd
 import plotly.express as px
 import dash
+import os
 from dash import html, dcc
 from dash.dependencies import Input, Output
 
 # Cargar datos
+<<<<<<< HEAD
 df = pd.read_csv('dashboard/datos_ciudades.csv')
+=======
+df = pd.read_csv("dashboard/datos_ciudades.csv")
+>>>>>>> 03294a837f0668b00b7ad80e25428a1bf7d39adf
 
 # Preprocesamiento general
 df['precio_millones'] = (df['precio'] / 1_000_000).round(2)
@@ -129,6 +134,10 @@ def actualizar_precio_m2(ciudad):
     fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
     return fig
 
-# Ejecutar
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 10000))  # Usa el puerto de la variable de entorno o 10000 por defecto
+    app.run(host='0.0.0.0', port=port, debug=True)
+
+
