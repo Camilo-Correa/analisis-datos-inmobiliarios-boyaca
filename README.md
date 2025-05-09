@@ -63,7 +63,7 @@ Este proyecto tiene como objetivo principal analizar y visualizar datos de inmue
 - [CSV con datos](./data)
 - [Ficha técnica / metadatos](./ficha_tecnica/metadatos_inmuebles_boyaca.md)
 - [Script de scraping](./scrapy)
-- [Dashboard en HTML](./dashboard/dashboard_inmuebles.html)
+- [Dashboard en HTML](https://royecto-an-lisis-de-datos-inmobiliarios.onrender.com/)
 - [Datos_Tratados](./limpieza_data/Limpieza_Analítica_de_Datos_inmuebles.ipynb)
 
 ---
